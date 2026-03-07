@@ -16,10 +16,10 @@ function formatReservation(r) {
   };
 }
 
-async function logAudit(reservationId, userId, userEmail, action, changesJson) {
+async function logAudit(reservationId, userId, userName, action, changesJson) {
   await pool.query(
-    'INSERT INTO audit_log (reservation_id, user_id, user_email, action, changes_json) VALUES ($1, $2, $3, $4, $5)',
-    [reservationId, userId, userEmail, action, JSON.stringify(changesJson)]
+    'INSERT INTO audit_log (reservation_id, user_id, user_name, action, changes_json) VALUES ($1, $2, $3, $4, $5)',
+    [reservationId, userId, userName, action, JSON.stringify(changesJson)]
   );
 }
 
@@ -31,7 +31,7 @@ router.get('/reservations', requireAdmin, async (req, res) => {
 
     if (status && VALID_STATUSES.includes(status)) {
       ({ rows } = await pool.query(
-        `SELECT r.*, u.email as user_email
+        `SELECT r.*, u.name as user_name
          FROM reservations r JOIN users u ON r.user_id = u.id
          WHERE r.status = $1
          ORDER BY r.created_at DESC`,
@@ -39,7 +39,7 @@ router.get('/reservations', requireAdmin, async (req, res) => {
       ));
     } else {
       ({ rows } = await pool.query(
-        `SELECT r.*, u.email as user_email
+        `SELECT r.*, u.name as user_name
          FROM reservations r JOIN users u ON r.user_id = u.id
          ORDER BY r.created_at DESC`
       ));
@@ -56,7 +56,7 @@ router.get('/reservations', requireAdmin, async (req, res) => {
 router.put('/reservations/:id', requireAdmin, async (req, res) => {
   try {
     const { rows: reservations } = await pool.query(
-      `SELECT r.*, u.email as user_email
+      `SELECT r.*, u.name as user_name
        FROM reservations r JOIN users u ON r.user_id = u.id
        WHERE r.id = $1`,
       [req.params.id]
@@ -119,17 +119,17 @@ router.put('/reservations/:id', requireAdmin, async (req, res) => {
     );
 
     if (Object.keys(changes).length > 0) {
-      await logAudit(reservation.id, req.user.id, req.user.email, 'admin_updated', changes);
+      await logAudit(reservation.id, req.user.id, req.user.name, 'admin_updated', changes);
     }
 
     // Notification
     if (status && status !== reservation.status) {
-      console.log(`[NOTIFICATION] Reservation #${reservation.id} by ${reservation.user_email} has been ${status} by admin`);
+      console.log(`[NOTIFICATION] Reservation #${reservation.id} by ${reservation.user_name} has been ${status} by admin`);
     }
 
     // Get updated with user email
     const { rows: result } = await pool.query(
-      `SELECT r.*, u.email as user_email
+      `SELECT r.*, u.name as user_name
        FROM reservations r JOIN users u ON r.user_id = u.id
        WHERE r.id = $1`,
       [req.params.id]

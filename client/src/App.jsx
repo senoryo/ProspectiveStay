@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from './context/AuthContext';
-import { api } from './api';
 import LoginTab from './components/LoginTab';
 import ManageReservationTab from './components/ManageReservationTab';
 import ViewReservationsTab from './components/ViewReservationsTab';
@@ -15,24 +14,8 @@ const TABS = [
 ];
 
 export default function App() {
-  const { user, setUser, loading, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('manage');
-
-  // Handle magic link token from URL
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    if (token) {
-      api.post('/api/auth/verify', { token })
-        .then((data) => {
-          setUser(data.user);
-          window.history.replaceState({}, '', '/');
-        })
-        .catch(() => {
-          window.history.replaceState({}, '', '/');
-        });
-    }
-  }, []);
 
   if (loading) {
     return (
@@ -67,8 +50,7 @@ export default function App() {
       <header className={styles.header}>
         <h1 className={styles.logo}>ProspectiveStay</h1>
         <div className={styles.userInfo}>
-          <span>{user.name || user.email}</span>
-          <span className={styles.email}>({user.email})</span>
+          <span>{user.name}</span>
           <button onClick={logout} className={styles.logoutBtn}>Logout</button>
         </div>
       </header>

@@ -123,7 +123,7 @@ export default function AdminTab() {
               {reservations.map((r) => (
                 editingId === r.id ? (
                   <tr key={r.id} className={styles.editRow}>
-                    <td>{r.user_email}</td>
+                    <td>{r.user_name}</td>
                     <td>
                       <input
                         type="text"
@@ -182,7 +182,7 @@ export default function AdminTab() {
                   </tr>
                 ) : (
                   <tr key={r.id}>
-                    <td data-label="User">{r.user_email}</td>
+                    <td data-label="User">{r.user_name}</td>
                     <td data-label="Name">{r.name}</td>
                     <td data-label="Party">{r.size_of_party}</td>
                     <td data-label="Start">{r.start_date}</td>

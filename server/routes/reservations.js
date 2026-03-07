@@ -44,10 +44,10 @@ function validateReservationFields(body, isNew = true) {
   return errors;
 }
 
-async function logAudit(reservationId, userId, userEmail, action, changesJson) {
+async function logAudit(reservationId, userId, userName, action, changesJson) {
   await pool.query(
-    'INSERT INTO audit_log (reservation_id, user_id, user_email, action, changes_json) VALUES ($1, $2, $3, $4, $5)',
-    [reservationId, userId, userEmail, action, JSON.stringify(changesJson)]
+    'INSERT INTO audit_log (reservation_id, user_id, user_name, action, changes_json) VALUES ($1, $2, $3, $4, $5)',
+    [reservationId, userId, userName, action, JSON.stringify(changesJson)]
   );
 }
 
@@ -55,7 +55,7 @@ async function logAudit(reservationId, userId, userEmail, action, changesJson) {
 router.get('/', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT r.*, u.email as user_email FROM reservations r JOIN users u ON r.user_id = u.id ORDER BY r.start_date DESC'
+      'SELECT r.*, u.name as user_name FROM reservations r JOIN users u ON r.user_id = u.id ORDER BY r.start_date DESC'
     );
     res.json({ reservations: rows.map(formatReservation) });
   } catch (err) {
@@ -106,7 +106,7 @@ router.get('/:id/audit', requireAuth, async (req, res) => {
     }
 
     const { rows: audit } = await pool.query(
-      'SELECT id, action, changes_json, user_email, created_at FROM audit_log WHERE reservation_id = $1 ORDER BY created_at ASC',
+      'SELECT id, action, changes_json, user_name, created_at FROM audit_log WHERE reservation_id = $1 ORDER BY created_at ASC',
       [req.params.id]
     );
 
@@ -135,7 +135,7 @@ router.post('/', requireAuth, async (req, res) => {
 
     const reservation = rows[0];
 
-    await logAudit(reservation.id, req.user.id, req.user.email, 'created', {
+    await logAudit(reservation.id, req.user.id, req.user.name, 'created', {
       name: name.trim(),
       size_of_party,
       start_date,
@@ -197,7 +197,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     );
 
     if (Object.keys(changes).length > 0) {
-      await logAudit(reservation.id, req.user.id, req.user.email, 'updated', changes);
+      await logAudit(reservation.id, req.user.id, req.user.name, 'updated', changes);
     }
 
     res.json({ reservation: formatReservation(updated[0]) });
@@ -227,7 +227,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
       [req.params.id]
     );
 
-    await logAudit(reservation.id, req.user.id, req.user.email, 'cancelled', {
+    await logAudit(reservation.id, req.user.id, req.user.name, 'cancelled', {
       status: { old: reservation.status, new: 'Cancelled' }
     });
 

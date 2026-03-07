@@ -84,7 +84,7 @@ export default function ViewReservationsTab() {
                 </span>
               </div>
               <div className={styles.cardBody}>
-                <p>Reserved by: {r.user_email}</p>
+                <p>Reserved by: {r.user_name}</p>
                 <p>Party Size: {r.size_of_party}</p>
                 <p>Dates: {r.start_date} to {r.end_date}</p>
                 {r.notes && <p>Notes: {r.notes}</p>}
@@ -112,7 +112,7 @@ export default function ViewReservationsTab() {
                         {auditLog.map((a) => (
                           <tr key={a.id}>
                             <td>{a.action}</td>
-                            <td>{a.user_email}</td>
+                            <td>{a.user_name}</td>
                             <td className={styles.changesCell}>{formatChanges(a.changes_json)}</td>
                             <td>{a.created_at}</td>
                           </tr>

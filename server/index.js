@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const path = require('path');
-const { initDb, cleanupExpiredTokens } = require('./db');
+const { initDb, cleanupExpiredSessions } = require('./db');
 
 const app = express();
 app.use(express.json());
@@ -24,8 +24,8 @@ app.get('*', (req, res) => {
 
 async function start() {
   await initDb();
-  await cleanupExpiredTokens();
-  setInterval(cleanupExpiredTokens, 60 * 60 * 1000);
+  await cleanupExpiredSessions();
+  setInterval(cleanupExpiredSessions, 60 * 60 * 1000);
 
   const PORT = process.env.PORT || 3001;
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
