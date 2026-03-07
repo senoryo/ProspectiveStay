@@ -6,10 +6,11 @@
 
 .container h2 {
   margin: 0 0 16px;
+  color: #ccd6f6;
 }
 
 .empty {
-  color: #6b7280;
+  color: #8892b0;
 }
 
 .cards {
@@ -19,10 +20,16 @@
 }
 
 .card {
-  background: #fff;
-  border-radius: 8px;
+  background: #16213e;
+  border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a3a5c;
+  transition: border-color 0.2s;
+}
+
+.card:hover {
+  border-color: #e94560;
 }
 
 .cardHeader {
@@ -34,11 +41,12 @@
 
 .cardHeader h3 {
   margin: 0;
+  color: #ccd6f6;
 }
 
 .badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 12px;
   color: #fff;
   font-size: 12px;
@@ -46,30 +54,34 @@
 }
 
 .cardBody p {
-  margin: 4px 0;
+  margin: 6px 0;
   font-size: 14px;
-  color: #374151;
+  color: #8892b0;
 }
 
 .auditBtn {
   margin-top: 12px;
-  padding: 6px 12px;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  padding: 8px 14px;
+  background: rgba(233, 69, 96, 0.1);
+  border: 1px solid #e94560;
+  border-radius: 6px;
   font-size: 13px;
+  color: #e94560;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .auditBtn:hover {
-  background: #e5e7eb;
+  background: #e94560;
+  color: #fff;
 }
 
 .auditSection {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #e5e7eb;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #2a3a5c;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .auditTable {
@@ -82,15 +94,48 @@
 .auditTable td {
   text-align: left;
   padding: 8px 10px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #2a3a5c;
 }
 
 .auditTable th {
-  background: #f9fafb;
+  background: #0f1a33;
   font-weight: 600;
+  color: #8892b0;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.auditTable td {
+  color: #ccd6f6;
 }
 
 .changesCell {
   max-width: 300px;
   word-break: break-word;
+  color: #8892b0;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 16px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .auditTable {
+    font-size: 11px;
+  }
+
+  .changesCell {
+    max-width: 200px;
+  }
 }

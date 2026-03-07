@@ -46,10 +46,13 @@ export default function App() {
   if (!user) {
     return (
       <div className={styles.app}>
-        <header className={styles.header}>
-          <h1 className={styles.logo}>ProspectiveStay</h1>
-        </header>
-        <LoginTab />
+        <div className={styles.heroLogin}>
+          <div className={styles.heroOverlay}>
+            <h1 className={styles.heroTitle}>ProspectiveStay</h1>
+            <p className={styles.heroSubtitle}>Your home away from home in Brooklyn</p>
+            <LoginTab />
+          </div>
+        </div>
       </div>
     );
   }

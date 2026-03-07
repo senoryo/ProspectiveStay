@@ -16,79 +16,95 @@
   margin: 0;
   min-width: 200px;
   text-align: center;
+  color: #ccd6f6;
 }
 
 .navBtn {
-  padding: 8px 14px;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  padding: 8px 16px;
+  background: rgba(233, 69, 96, 0.15);
+  border: 1px solid #e94560;
+  border-radius: 8px;
   font-size: 18px;
+  color: #e94560;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .navBtn:hover {
-  background: #e5e7eb;
+  background: #e94560;
+  color: #fff;
 }
 
 .calendar {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  border-radius: 8px;
+  background: #16213e;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a3a5c;
 }
 
 .calendar th {
-  padding: 10px;
-  background: #f9fafb;
+  padding: 12px;
+  background: #0f1a33;
   font-weight: 600;
   font-size: 13px;
   text-align: center;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #2a3a5c;
+  color: #8892b0;
 }
 
 .calendar td {
-  height: 70px;
+  height: 75px;
   vertical-align: top;
   padding: 6px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #2a3a5c;
   position: relative;
 }
 
 .emptyCell {
-  background: #f9fafb;
+  background: #0f1a33;
 }
 
 .dayCell {
   cursor: default;
+  transition: background 0.2s;
 }
 
 .dayCell.accepted {
-  background: #dcfce7;
+  background: rgba(34, 197, 94, 0.15);
   cursor: pointer;
 }
 
+.dayCell.accepted:hover {
+  background: rgba(34, 197, 94, 0.25);
+}
+
 .dayCell.pending {
-  background: #fef9c3;
+  background: rgba(234, 179, 8, 0.15);
   cursor: pointer;
+}
+
+.dayCell.pending:hover {
+  background: rgba(234, 179, 8, 0.25);
 }
 
 .dayNumber {
   font-size: 14px;
   font-weight: 500;
+  color: #ccd6f6;
 }
 
 .countBadge {
   position: absolute;
   bottom: 4px;
   right: 4px;
-  background: #2563eb;
+  background: #e94560;
   color: #fff;
   font-size: 11px;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -98,22 +114,60 @@
 
 .popover {
   margin-top: 20px;
-  background: #fff;
-  border-radius: 8px;
+  background: #16213e;
+  border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a3a5c;
 }
 
 .popover h3 {
   margin: 0 0 12px;
+  color: #ccd6f6;
 }
 
 .popoverItem {
-  padding: 8px 0;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 0;
+  border-bottom: 1px solid #2a3a5c;
   font-size: 14px;
+  color: #ccd6f6;
+}
+
+.popoverItem small {
+  color: #8892b0;
 }
 
 .popoverItem:last-child {
   border-bottom: none;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 16px;
+  }
+
+  .header h2 {
+    min-width: 140px;
+    font-size: 18px;
+  }
+
+  .calendar td {
+    height: 55px;
+    padding: 4px;
+  }
+
+  .calendar th {
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+
+  .dayNumber {
+    font-size: 12px;
+  }
+
+  .countBadge {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
 }

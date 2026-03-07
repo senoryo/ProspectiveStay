@@ -182,17 +182,17 @@ export default function AdminTab() {
                   </tr>
                 ) : (
                   <tr key={r.id}>
-                    <td>{r.user_email}</td>
-                    <td>{r.name}</td>
-                    <td>{r.size_of_party}</td>
-                    <td>{r.start_date}</td>
-                    <td>{r.end_date}</td>
-                    <td>
+                    <td data-label="User">{r.user_email}</td>
+                    <td data-label="Name">{r.name}</td>
+                    <td data-label="Party">{r.size_of_party}</td>
+                    <td data-label="Start">{r.start_date}</td>
+                    <td data-label="End">{r.end_date}</td>
+                    <td data-label="Status">
                       <span className={styles.badge} style={{ background: STATUS_COLORS[r.status] || '#9ca3af' }}>
                         {r.status}
                       </span>
                     </td>
-                    <td className={styles.notesCell}>{r.notes}</td>
+                    <td data-label="Notes" className={styles.notesCell}>{r.notes}</td>
                     <td className={styles.actions}>
                       {r.status === 'Pending' && (
                         <>

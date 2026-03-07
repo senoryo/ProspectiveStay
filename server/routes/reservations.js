@@ -7,6 +7,14 @@ const router = express.Router();
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
+function formatReservation(r) {
+  return {
+    ...r,
+    start_date: r.start_date instanceof Date ? r.start_date.toISOString().slice(0, 10) : r.start_date,
+    end_date: r.end_date instanceof Date ? r.end_date.toISOString().slice(0, 10) : r.end_date,
+  };
+}
+
 function validateReservationFields(body, isNew = true) {
   const errors = [];
   const { name, size_of_party, start_date, end_date, notes } = body;
@@ -49,7 +57,7 @@ router.get('/', requireAuth, async (req, res) => {
     const { rows } = await pool.query(
       'SELECT r.*, u.email as user_email FROM reservations r JOIN users u ON r.user_id = u.id ORDER BY r.start_date DESC'
     );
-    res.json({ reservations: rows });
+    res.json({ reservations: rows.map(formatReservation) });
   } catch (err) {
     logError('get-reservations', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -79,7 +87,7 @@ router.get('/calendar', requireAuth, async (req, res) => {
       [lastDay, firstDay]
     );
 
-    res.json({ reservations: rows, month, year });
+    res.json({ reservations: rows.map(formatReservation), month, year });
   } catch (err) {
     logError('calendar', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -136,7 +144,7 @@ router.post('/', requireAuth, async (req, res) => {
       status: 'Pending'
     });
 
-    res.json({ reservation });
+    res.json({ reservation: formatReservation(reservation) });
   } catch (err) {
     logError('create-reservation', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -192,7 +200,7 @@ router.put('/:id', requireAuth, async (req, res) => {
       await logAudit(reservation.id, req.user.id, req.user.email, 'updated', changes);
     }
 
-    res.json({ reservation: updated[0] });
+    res.json({ reservation: formatReservation(updated[0]) });
   } catch (err) {
     logError('update-reservation', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -223,7 +231,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
       status: { old: reservation.status, new: 'Cancelled' }
     });
 
-    res.json({ reservation: updated[0] });
+    res.json({ reservation: formatReservation(updated[0]) });
   } catch (err) {
     logError('cancel-reservation', err);
     res.status(500).json({ error: 'Internal server error' });

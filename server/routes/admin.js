@@ -8,6 +8,14 @@ const router = express.Router();
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const VALID_STATUSES = ['Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed'];
 
+function formatReservation(r) {
+  return {
+    ...r,
+    start_date: r.start_date instanceof Date ? r.start_date.toISOString().slice(0, 10) : r.start_date,
+    end_date: r.end_date instanceof Date ? r.end_date.toISOString().slice(0, 10) : r.end_date,
+  };
+}
+
 async function logAudit(reservationId, userId, userEmail, action, changesJson) {
   await pool.query(
     'INSERT INTO audit_log (reservation_id, user_id, user_email, action, changes_json) VALUES ($1, $2, $3, $4, $5)',
@@ -37,7 +45,7 @@ router.get('/reservations', requireAdmin, async (req, res) => {
       ));
     }
 
-    res.json({ reservations: rows });
+    res.json({ reservations: rows.map(formatReservation) });
   } catch (err) {
     logError('admin-get-reservations', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -143,7 +151,7 @@ router.put('/reservations/:id', requireAdmin, async (req, res) => {
       }
     }
 
-    const response = { reservation: result[0] };
+    const response = { reservation: formatReservation(result[0]) };
     if (warning) response.warning = warning;
     res.json(response);
   } catch (err) {

@@ -1,6 +1,6 @@
 .app {
   min-height: 100vh;
-  background: #f3f4f6;
+  background: #1a1a2e;
 }
 
 .loadingContainer {
@@ -9,14 +9,15 @@
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background: #f3f4f6;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #e0e0e0;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #2563eb;
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #e94560;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -26,18 +27,27 @@
 }
 
 .header {
-  background: #1e293b;
+  background: linear-gradient(rgba(15, 52, 96, 0.92), rgba(26, 26, 46, 0.95)),
+    url('https://images.unsplash.com/photo-1496588152823-86ff7695e68f?w=1600&q=80') center/cover no-repeat;
   color: #fff;
-  padding: 12px 24px;
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 2px solid #e94560;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .logo {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #e94560, #ff6b6b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .userInfo {
@@ -45,6 +55,7 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
+  flex-wrap: wrap;
 }
 
 .email {
@@ -52,48 +63,132 @@
 }
 
 .logoutBtn {
-  padding: 6px 14px;
-  margin-left: 8px;
-  background: #475569;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
+  padding: 6px 16px;
+  margin-left: 4px;
+  background: rgba(233, 69, 96, 0.2);
+  color: #e94560;
+  border: 1px solid #e94560;
+  border-radius: 6px;
   font-size: 13px;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .logoutBtn:hover {
-  background: #64748b;
+  background: #e94560;
+  color: #fff;
 }
 
 .nav {
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 0 24px;
+  background: #16213e;
+  border-bottom: 1px solid #2a3a5c;
+  padding: 0 12px;
   display: flex;
   gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tab {
-  padding: 12px 20px;
+  padding: 14px 18px;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   font-size: 14px;
   font-weight: 500;
-  color: #6b7280;
+  color: #8892b0;
   cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
 }
 
 .tab:hover {
-  color: #1f2937;
+  color: #ccd6f6;
 }
 
 .activeTab {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: #e94560;
+  border-bottom-color: #e94560;
 }
 
 .main {
   padding: 0;
+}
+
+.heroLogin {
+  min-height: 100vh;
+  background: url('https://images.unsplash.com/photo-1555424221-250de2460e13?w=1600&q=80') center/cover no-repeat fixed;
+}
+
+.heroOverlay {
+  min-height: 100vh;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 20, 40, 0.7) 0%,
+    rgba(26, 26, 46, 0.92) 40%,
+    rgba(26, 26, 46, 0.98) 100%
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px 40px;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #e94560, #ff6b6b, #ff9a9e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+}
+
+.heroSubtitle {
+  margin: 8px 0 30px;
+  font-size: 18px;
+  color: #8892b0;
+  text-align: center;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 600px) {
+  .heroOverlay {
+    padding: 40px 16px 24px;
+  }
+
+  .heroTitle {
+    font-size: 32px;
+  }
+
+  .heroSubtitle {
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .header {
+    padding: 12px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .userInfo {
+    font-size: 12px;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .email {
+    display: none;
+  }
+
+  .tab {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
 }
