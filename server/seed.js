@@ -1,10 +1,19 @@
-const { db, initDb } = require('./db');
+const { pool, initDb } = require('./db');
 
-initDb();
+async function seed() {
+  await initDb();
 
-db.prepare(`
-  INSERT OR IGNORE INTO users (email, name, is_admin)
-  VALUES ('admin@ppw.com', 'Admin', 1)
-`).run();
+  await pool.query(`
+    INSERT INTO users (email, name, is_admin)
+    VALUES ('admin@ppw.com', 'Admin', TRUE)
+    ON CONFLICT (email) DO NOTHING
+  `);
 
-console.log('Seed complete. Admin user: admin@ppw.com');
+  console.log('Seed complete. Admin user: admin@ppw.com');
+  await pool.end();
+}
+
+seed().catch((err) => {
+  console.error('Seed failed:', err);
+  process.exit(1);
+});

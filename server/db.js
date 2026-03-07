@@ -1,70 +1,61 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const { Pool } = require('pg');
 
-const db = new Database(path.join(__dirname, 'prospective_stay.db'));
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
-function initDb() {
-  db.pragma('foreign_keys = ON');
-  db.pragma('journal_mode = WAL');
-
-  db.exec(`
+async function initDb() {
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
       name TEXT NOT NULL DEFAULT '',
-      is_admin INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS login_tokens (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id),
       token TEXT UNIQUE NOT NULL,
       code TEXT NOT NULL,
-      expires_at TEXT NOT NULL,
-      used INTEGER NOT NULL DEFAULT 0,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used BOOLEAN NOT NULL DEFAULT FALSE,
       failed_attempts INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS sessions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id),
       token TEXT UNIQUE NOT NULL,
-      expires_at TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS reservations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id),
       name TEXT NOT NULL,
-      size_of_party INTEGER NOT NULL DEFAULT 1,
-      start_date TEXT NOT NULL,
-      end_date TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'Pending',
+      size_of_party INTEGER NOT NULL DEFAULT 1 CHECK (size_of_party >= 1),
+      start_date DATE NOT NULL,
+      end_date DATE NOT NULL CHECK (end_date >= start_date),
+      status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed')),
       notes TEXT NOT NULL DEFAULT '',
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (user_id) REFERENCES users(id),
-      CHECK (status IN ('Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed')),
-      CHECK (end_date >= start_date),
-      CHECK (size_of_party >= 1)
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS audit_log (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      reservation_id INTEGER NOT NULL,
-      user_id INTEGER NOT NULL,
+      id SERIAL PRIMARY KEY,
+      reservation_id INTEGER NOT NULL REFERENCES reservations(id),
+      user_id INTEGER NOT NULL REFERENCES users(id),
       user_email TEXT NOT NULL,
       action TEXT NOT NULL,
       changes_json TEXT NOT NULL DEFAULT '{}',
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (reservation_id) REFERENCES reservations(id),
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     CREATE INDEX IF NOT EXISTS idx_reservations_user_id ON reservations(user_id);
@@ -76,9 +67,9 @@ function initDb() {
   `);
 }
 
-function cleanupExpiredTokens() {
-  db.prepare("DELETE FROM login_tokens WHERE expires_at < datetime('now')").run();
-  db.prepare("DELETE FROM sessions WHERE expires_at < datetime('now')").run();
+async function cleanupExpiredTokens() {
+  await pool.query("DELETE FROM login_tokens WHERE expires_at < NOW()");
+  await pool.query("DELETE FROM sessions WHERE expires_at < NOW()");
 }
 
-module.exports = { db, initDb, cleanupExpiredTokens };
+module.exports = { pool, initDb, cleanupExpiredTokens };

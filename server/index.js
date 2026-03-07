@@ -21,9 +21,16 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
-initDb();
-cleanupExpiredTokens();
-setInterval(cleanupExpiredTokens, 60 * 60 * 1000);
+async function start() {
+  await initDb();
+  await cleanupExpiredTokens();
+  setInterval(cleanupExpiredTokens, 60 * 60 * 1000);
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+start().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});

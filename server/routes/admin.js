@@ -1,5 +1,5 @@
 const express = require('express');
-const { db } = require('../db');
+const { pool } = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const { logError } = require('../logger');
 
@@ -8,34 +8,36 @@ const router = express.Router();
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const VALID_STATUSES = ['Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed'];
 
-function logAudit(reservationId, userId, userEmail, action, changesJson) {
-  db.prepare(
-    'INSERT INTO audit_log (reservation_id, user_id, user_email, action, changes_json) VALUES (?, ?, ?, ?, ?)'
-  ).run(reservationId, userId, userEmail, action, JSON.stringify(changesJson));
+async function logAudit(reservationId, userId, userEmail, action, changesJson) {
+  await pool.query(
+    'INSERT INTO audit_log (reservation_id, user_id, user_email, action, changes_json) VALUES ($1, $2, $3, $4, $5)',
+    [reservationId, userId, userEmail, action, JSON.stringify(changesJson)]
+  );
 }
 
 // GET /api/admin/reservations
-router.get('/reservations', requireAdmin, (req, res) => {
+router.get('/reservations', requireAdmin, async (req, res) => {
   try {
     const { status } = req.query;
-    let reservations;
+    let rows;
 
     if (status && VALID_STATUSES.includes(status)) {
-      reservations = db.prepare(
+      ({ rows } = await pool.query(
         `SELECT r.*, u.email as user_email
          FROM reservations r JOIN users u ON r.user_id = u.id
-         WHERE r.status = ?
-         ORDER BY r.created_at DESC`
-      ).all(status);
+         WHERE r.status = $1
+         ORDER BY r.created_at DESC`,
+        [status]
+      ));
     } else {
-      reservations = db.prepare(
+      ({ rows } = await pool.query(
         `SELECT r.*, u.email as user_email
          FROM reservations r JOIN users u ON r.user_id = u.id
          ORDER BY r.created_at DESC`
-      ).all();
+      ));
     }
 
-    res.json({ reservations });
+    res.json({ reservations: rows });
   } catch (err) {
     logError('admin-get-reservations', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -43,17 +45,19 @@ router.get('/reservations', requireAdmin, (req, res) => {
 });
 
 // PUT /api/admin/reservations/:id
-router.put('/reservations/:id', requireAdmin, (req, res) => {
+router.put('/reservations/:id', requireAdmin, async (req, res) => {
   try {
-    const reservation = db.prepare(
+    const { rows: reservations } = await pool.query(
       `SELECT r.*, u.email as user_email
        FROM reservations r JOIN users u ON r.user_id = u.id
-       WHERE r.id = ?`
-    ).get(req.params.id);
+       WHERE r.id = $1`,
+      [req.params.id]
+    );
 
-    if (!reservation) {
+    if (reservations.length === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
+    const reservation = reservations[0];
 
     const { status, name, size_of_party, start_date, end_date, notes } = req.body;
 
@@ -74,8 +78,10 @@ router.put('/reservations/:id', requireAdmin, (req, res) => {
     if (end_date !== undefined && (!DATE_REGEX.test(end_date) || isNaN(Date.parse(end_date)))) {
       errors.push('Valid end date (YYYY-MM-DD) is required');
     }
-    const finalStartDate = start_date !== undefined ? start_date : reservation.start_date;
-    const finalEndDate = end_date !== undefined ? end_date : reservation.end_date;
+    const oldStartDate = reservation.start_date instanceof Date ? reservation.start_date.toISOString().slice(0, 10) : reservation.start_date;
+    const oldEndDate = reservation.end_date instanceof Date ? reservation.end_date.toISOString().slice(0, 10) : reservation.end_date;
+    const finalStartDate = start_date !== undefined ? start_date : oldStartDate;
+    const finalEndDate = end_date !== undefined ? end_date : oldEndDate;
     if (finalEndDate < finalStartDate) {
       errors.push('End date must be on or after start date');
     }
@@ -93,18 +99,19 @@ router.put('/reservations/:id', requireAdmin, (req, res) => {
 
     if (finalName !== reservation.name) changes.name = { old: reservation.name, new: finalName };
     if (finalSizeOfParty !== reservation.size_of_party) changes.size_of_party = { old: reservation.size_of_party, new: finalSizeOfParty };
-    if (finalStartDate !== reservation.start_date) changes.start_date = { old: reservation.start_date, new: finalStartDate };
-    if (finalEndDate !== reservation.end_date) changes.end_date = { old: reservation.end_date, new: finalEndDate };
+    if (finalStartDate !== oldStartDate) changes.start_date = { old: oldStartDate, new: finalStartDate };
+    if (finalEndDate !== oldEndDate) changes.end_date = { old: oldEndDate, new: finalEndDate };
     if (finalNotes !== reservation.notes) changes.notes = { old: reservation.notes, new: finalNotes };
     if (finalStatus !== reservation.status) changes.status = { old: reservation.status, new: finalStatus };
 
-    db.prepare(
-      `UPDATE reservations SET name = ?, size_of_party = ?, start_date = ?, end_date = ?, notes = ?, status = ?, updated_at = datetime('now')
-       WHERE id = ?`
-    ).run(finalName, finalSizeOfParty, finalStartDate, finalEndDate, finalNotes, finalStatus, req.params.id);
+    const { rows: updated } = await pool.query(
+      `UPDATE reservations SET name = $1, size_of_party = $2, start_date = $3, end_date = $4, notes = $5, status = $6, updated_at = NOW()
+       WHERE id = $7 RETURNING *`,
+      [finalName, finalSizeOfParty, finalStartDate, finalEndDate, finalNotes, finalStatus, req.params.id]
+    );
 
     if (Object.keys(changes).length > 0) {
-      logAudit(reservation.id, req.user.id, req.user.email, 'admin_updated', changes);
+      await logAudit(reservation.id, req.user.id, req.user.email, 'admin_updated', changes);
     }
 
     // Notification
@@ -112,27 +119,31 @@ router.put('/reservations/:id', requireAdmin, (req, res) => {
       console.log(`[NOTIFICATION] Reservation #${reservation.id} by ${reservation.user_email} has been ${status} by admin`);
     }
 
-    const updated = db.prepare(
+    // Get updated with user email
+    const { rows: result } = await pool.query(
       `SELECT r.*, u.email as user_email
        FROM reservations r JOIN users u ON r.user_id = u.id
-       WHERE r.id = ?`
-    ).get(req.params.id);
+       WHERE r.id = $1`,
+      [req.params.id]
+    );
 
     // Overlap warning when accepting
     let warning;
     if (status === 'Accepted') {
-      const overlapping = db.prepare(
+      const { rows: overlapping } = await pool.query(
         `SELECT COUNT(*) as count FROM reservations
-         WHERE id != ? AND status = 'Accepted'
-         AND start_date <= ? AND end_date >= ?`
-      ).get(req.params.id, updated.end_date, updated.start_date);
+         WHERE id != $1 AND status = 'Accepted'
+         AND start_date <= $2 AND end_date >= $3`,
+        [req.params.id, result[0].end_date, result[0].start_date]
+      );
 
-      if (overlapping.count > 0) {
-        warning = `Overlaps with ${overlapping.count} other accepted reservation${overlapping.count > 1 ? 's' : ''}`;
+      if (parseInt(overlapping[0].count) > 0) {
+        const cnt = parseInt(overlapping[0].count);
+        warning = `Overlaps with ${cnt} other accepted reservation${cnt > 1 ? 's' : ''}`;
       }
     }
 
-    const response = { reservation: updated };
+    const response = { reservation: result[0] };
     if (warning) response.warning = warning;
     res.json(response);
   } catch (err) {

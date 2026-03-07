@@ -2,6 +2,14 @@ ProspectiveStay - Reservation system for PPW
 
 PREREQUISITES
   Node.js 18+ (recommend v20)
+  PostgreSQL 14+
+
+LOCAL DATABASE SETUP
+  1. Create a PostgreSQL database:
+       createdb prospective_stay
+  2. Set the connection string:
+       export DATABASE_URL=postgresql://user:password@localhost:5432/prospective_stay
+     (replace user/password with your PostgreSQL credentials)
 
 SETUP
   cd server && npm install && npm run seed
@@ -22,5 +30,12 @@ LOGIN
 TESTS
   bash tests/run_tests.sh
 
-BUILD FOR PRODUCTION
-  cd client && npm run build
+DEPLOY TO RENDER.COM
+  1. Create a new PostgreSQL database in Render dashboard.
+  2. Create a new Web Service, connect your GitHub repo.
+  3. Settings:
+       Build Command:  cd server && npm install && cd ../client && npm install && npm run build
+       Start Command:  cd server && node seed.js && node index.js
+  4. Environment variables:
+       DATABASE_URL    = (use Internal Database URL from your Render PostgreSQL instance)
+       NODE_ENV        = production

@@ -1,5 +1,5 @@
 const express = require('express');
-const { db } = require('../db');
+const { pool } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { logError } = require('../logger');
 
@@ -36,19 +36,20 @@ function validateReservationFields(body, isNew = true) {
   return errors;
 }
 
-function logAudit(reservationId, userId, userEmail, action, changesJson) {
-  db.prepare(
-    'INSERT INTO audit_log (reservation_id, user_id, user_email, action, changes_json) VALUES (?, ?, ?, ?, ?)'
-  ).run(reservationId, userId, userEmail, action, JSON.stringify(changesJson));
+async function logAudit(reservationId, userId, userEmail, action, changesJson) {
+  await pool.query(
+    'INSERT INTO audit_log (reservation_id, user_id, user_email, action, changes_json) VALUES ($1, $2, $3, $4, $5)',
+    [reservationId, userId, userEmail, action, JSON.stringify(changesJson)]
+  );
 }
 
 // GET /api/reservations
-router.get('/', requireAuth, (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
-    const reservations = db.prepare(
+    const { rows } = await pool.query(
       'SELECT r.*, u.email as user_email FROM reservations r JOIN users u ON r.user_id = u.id ORDER BY r.start_date DESC'
-    ).all();
-    res.json({ reservations });
+    );
+    res.json({ reservations: rows });
   } catch (err) {
     logError('get-reservations', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -56,7 +57,7 @@ router.get('/', requireAuth, (req, res) => {
 });
 
 // GET /api/reservations/calendar
-router.get('/calendar', requireAuth, (req, res) => {
+router.get('/calendar', requireAuth, async (req, res) => {
   try {
     const month = parseInt(req.query.month);
     const year = parseInt(req.query.year);
@@ -69,15 +70,16 @@ router.get('/calendar', requireAuth, (req, res) => {
     const daysInMonth = new Date(year, month, 0).getDate();
     const lastDay = `${year}-${String(month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
 
-    const reservations = db.prepare(
+    const { rows } = await pool.query(
       `SELECT id, name, start_date, end_date, status, size_of_party
        FROM reservations
-       WHERE start_date <= ? AND end_date >= ?
+       WHERE start_date <= $1 AND end_date >= $2
        AND status NOT IN ('Cancelled', 'Rejected')
-       ORDER BY start_date`
-    ).all(lastDay, firstDay);
+       ORDER BY start_date`,
+      [lastDay, firstDay]
+    );
 
-    res.json({ reservations, month, year });
+    res.json({ reservations: rows, month, year });
   } catch (err) {
     logError('calendar', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -85,19 +87,20 @@ router.get('/calendar', requireAuth, (req, res) => {
 });
 
 // GET /api/reservations/:id/audit
-router.get('/:id/audit', requireAuth, (req, res) => {
+router.get('/:id/audit', requireAuth, async (req, res) => {
   try {
-    const reservation = db.prepare('SELECT * FROM reservations WHERE id = ?').get(req.params.id);
-    if (!reservation) {
+    const { rows: reservations } = await pool.query('SELECT * FROM reservations WHERE id = $1', [req.params.id]);
+    if (reservations.length === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
-    if (reservation.user_id !== req.user.id && req.user.is_admin !== 1) {
+    if (reservations[0].user_id !== req.user.id && !req.user.is_admin) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const audit = db.prepare(
-      'SELECT id, action, changes_json, user_email, created_at FROM audit_log WHERE reservation_id = ? ORDER BY created_at ASC'
-    ).all(req.params.id);
+    const { rows: audit } = await pool.query(
+      'SELECT id, action, changes_json, user_email, created_at FROM audit_log WHERE reservation_id = $1 ORDER BY created_at ASC',
+      [req.params.id]
+    );
 
     res.json({ audit });
   } catch (err) {
@@ -107,7 +110,7 @@ router.get('/:id/audit', requireAuth, (req, res) => {
 });
 
 // POST /api/reservations
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { name, size_of_party, start_date, end_date, notes } = req.body;
     const errors = validateReservationFields(req.body, true);
@@ -116,14 +119,15 @@ router.post('/', requireAuth, (req, res) => {
       return res.status(400).json({ error: errors.join('. ') });
     }
 
-    const result = db.prepare(
+    const { rows } = await pool.query(
       `INSERT INTO reservations (user_id, name, size_of_party, start_date, end_date, notes)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).run(req.user.id, name.trim(), size_of_party, start_date, end_date, (notes || '').trim());
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [req.user.id, name.trim(), size_of_party, start_date, end_date, (notes || '').trim()]
+    );
 
-    const reservation = db.prepare('SELECT * FROM reservations WHERE id = ?').get(result.lastInsertRowid);
+    const reservation = rows[0];
 
-    logAudit(reservation.id, req.user.id, req.user.email, 'created', {
+    await logAudit(reservation.id, req.user.id, req.user.email, 'created', {
       name: name.trim(),
       size_of_party,
       start_date,
@@ -140,12 +144,13 @@ router.post('/', requireAuth, (req, res) => {
 });
 
 // PUT /api/reservations/:id
-router.put('/:id', requireAuth, (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
-    const reservation = db.prepare('SELECT * FROM reservations WHERE id = ?').get(req.params.id);
-    if (!reservation) {
+    const { rows: reservations } = await pool.query('SELECT * FROM reservations WHERE id = $1', [req.params.id]);
+    if (reservations.length === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
+    const reservation = reservations[0];
     if (reservation.user_id !== req.user.id) {
       return res.status(403).json({ error: 'You can only edit your own reservations' });
     }
@@ -163,8 +168,10 @@ router.put('/:id', requireAuth, (req, res) => {
     const changes = {};
     if (name.trim() !== reservation.name) changes.name = { old: reservation.name, new: name.trim() };
     if (size_of_party !== reservation.size_of_party) changes.size_of_party = { old: reservation.size_of_party, new: size_of_party };
-    if (start_date !== reservation.start_date) changes.start_date = { old: reservation.start_date, new: start_date };
-    if (end_date !== reservation.end_date) changes.end_date = { old: reservation.end_date, new: end_date };
+    const oldStartDate = reservation.start_date instanceof Date ? reservation.start_date.toISOString().slice(0, 10) : reservation.start_date;
+    const oldEndDate = reservation.end_date instanceof Date ? reservation.end_date.toISOString().slice(0, 10) : reservation.end_date;
+    if (start_date !== oldStartDate) changes.start_date = { old: oldStartDate, new: start_date };
+    if (end_date !== oldEndDate) changes.end_date = { old: oldEndDate, new: end_date };
     const newNotes = (notes || '').trim();
     if (newNotes !== reservation.notes) changes.notes = { old: reservation.notes, new: newNotes };
 
@@ -175,17 +182,17 @@ router.put('/:id', requireAuth, (req, res) => {
       changes.status = { old: 'Accepted', new: 'Pending' };
     }
 
-    db.prepare(
-      `UPDATE reservations SET name = ?, size_of_party = ?, start_date = ?, end_date = ?, notes = ?, status = ?, updated_at = datetime('now')
-       WHERE id = ?`
-    ).run(name.trim(), size_of_party, start_date, end_date, newNotes, newStatus, req.params.id);
+    const { rows: updated } = await pool.query(
+      `UPDATE reservations SET name = $1, size_of_party = $2, start_date = $3, end_date = $4, notes = $5, status = $6, updated_at = NOW()
+       WHERE id = $7 RETURNING *`,
+      [name.trim(), size_of_party, start_date, end_date, newNotes, newStatus, req.params.id]
+    );
 
     if (Object.keys(changes).length > 0) {
-      logAudit(reservation.id, req.user.id, req.user.email, 'updated', changes);
+      await logAudit(reservation.id, req.user.id, req.user.email, 'updated', changes);
     }
 
-    const updated = db.prepare('SELECT * FROM reservations WHERE id = ?').get(req.params.id);
-    res.json({ reservation: updated });
+    res.json({ reservation: updated[0] });
   } catch (err) {
     logError('update-reservation', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -193,12 +200,13 @@ router.put('/:id', requireAuth, (req, res) => {
 });
 
 // DELETE /api/reservations/:id
-router.delete('/:id', requireAuth, (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    const reservation = db.prepare('SELECT * FROM reservations WHERE id = ?').get(req.params.id);
-    if (!reservation) {
+    const { rows: reservations } = await pool.query('SELECT * FROM reservations WHERE id = $1', [req.params.id]);
+    if (reservations.length === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
+    const reservation = reservations[0];
     if (reservation.user_id !== req.user.id) {
       return res.status(403).json({ error: 'You can only cancel your own reservations' });
     }
@@ -206,16 +214,16 @@ router.delete('/:id', requireAuth, (req, res) => {
       return res.status(400).json({ error: `Cannot cancel a ${reservation.status.toLowerCase()} reservation` });
     }
 
-    db.prepare(
-      "UPDATE reservations SET status = 'Cancelled', updated_at = datetime('now') WHERE id = ?"
-    ).run(req.params.id);
+    const { rows: updated } = await pool.query(
+      "UPDATE reservations SET status = 'Cancelled', updated_at = NOW() WHERE id = $1 RETURNING *",
+      [req.params.id]
+    );
 
-    logAudit(reservation.id, req.user.id, req.user.email, 'cancelled', {
+    await logAudit(reservation.id, req.user.id, req.user.email, 'cancelled', {
       status: { old: reservation.status, new: 'Cancelled' }
     });
 
-    const updated = db.prepare('SELECT * FROM reservations WHERE id = ?').get(req.params.id);
-    res.json({ reservation: updated });
+    res.json({ reservation: updated[0] });
   } catch (err) {
     logError('cancel-reservation', err);
     res.status(500).json({ error: 'Internal server error' });
