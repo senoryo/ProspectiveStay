@@ -16,7 +16,7 @@ async function requireAuth(req, res, next) {
   }
 
   const { rows: users } = await pool.query(
-    'SELECT id, name, is_admin FROM users WHERE id = $1',
+    'SELECT id, name, avatar, is_admin FROM users WHERE id = $1',
     [sessions[0].user_id]
   );
 

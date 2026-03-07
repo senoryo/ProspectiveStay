@@ -12,6 +12,7 @@ app.use(cookieParser());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/reservations', require('./routes/reservations'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/messages', require('./routes/messages'));
 
 // Serve frontend in production
 app.use(express.static(path.join(__dirname, '../client/dist')));

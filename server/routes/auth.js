@@ -8,9 +8,12 @@ const router = express.Router();
 
 router.post('/login', async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, avatar } = req.body;
     if (!name || typeof name !== 'string' || name.trim().length === 0 || name.trim().length > 100) {
       return res.status(400).json({ error: 'Name is required (max 100 characters)' });
+    }
+    if (!avatar || typeof avatar !== 'string') {
+      return res.status(400).json({ error: 'Please select an avatar' });
     }
 
     const trimmedName = name.trim();
@@ -18,8 +21,12 @@ router.post('/login', async (req, res) => {
     // Get or create user by name
     let { rows } = await pool.query('SELECT * FROM users WHERE name = $1', [trimmedName]);
     if (rows.length === 0) {
-      await pool.query('INSERT INTO users (name) VALUES ($1)', [trimmedName]);
+      await pool.query('INSERT INTO users (name, avatar) VALUES ($1, $2)', [trimmedName, avatar]);
       ({ rows } = await pool.query('SELECT * FROM users WHERE name = $1', [trimmedName]));
+    } else {
+      // Update avatar on login
+      await pool.query('UPDATE users SET avatar = $1 WHERE name = $2', [avatar, trimmedName]);
+      rows[0].avatar = avatar;
     }
     const user = rows[0];
 
@@ -42,7 +49,7 @@ router.post('/login', async (req, res) => {
 
     res.json({
       success: true,
-      user: { id: user.id, name: user.name, is_admin: user.is_admin }
+      user: { id: user.id, name: user.name, avatar: user.avatar, is_admin: user.is_admin }
     });
   } catch (err) {
     logError('login', err);

@@ -5,9 +5,11 @@ import ManageReservationTab from './components/ManageReservationTab';
 import ViewReservationsTab from './components/ViewReservationsTab';
 import CalendarViewTab from './components/CalendarViewTab';
 import AdminTab from './components/AdminTab';
+import MessageBoardTab from './components/MessageBoardTab';
 import styles from './App.module.css';
 
 const TABS = [
+  { key: 'messages', label: 'Message Board' },
   { key: 'manage', label: 'Manage Reservations' },
   { key: 'view', label: 'View Reservations' },
   { key: 'calendar', label: 'Calendar' },
@@ -15,7 +17,7 @@ const TABS = [
 
 export default function App() {
   const { user, loading, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('manage');
+  const [activeTab, setActiveTab] = useState('messages');
 
   if (loading) {
     return (
@@ -50,7 +52,11 @@ export default function App() {
       <header className={styles.header}>
         <h1 className={styles.logo}>ProspectiveStay</h1>
         <div className={styles.userInfo}>
+          {user.avatar && (
+            <img src={user.avatar} alt="" className={styles.userAvatar} />
+          )}
           <span>{user.name}</span>
+          {user.is_admin && <span className={styles.adminBadge}>ADMIN</span>}
           <button onClick={logout} className={styles.logoutBtn}>Logout</button>
         </div>
       </header>
@@ -69,6 +75,7 @@ export default function App() {
         {activeTab === 'manage' && <ManageReservationTab />}
         {activeTab === 'view' && <ViewReservationsTab />}
         {activeTab === 'calendar' && <CalendarViewTab />}
+        {activeTab === 'messages' && <MessageBoardTab />}
         {activeTab === 'admin' && user.is_admin && <AdminTab />}
       </main>
     </div>

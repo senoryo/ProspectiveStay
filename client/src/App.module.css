@@ -58,8 +58,32 @@
   flex-wrap: wrap;
 }
 
+.userAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #e94560;
+}
+
 .email {
   color: #94a3b8;
+}
+
+.adminBadge {
+  padding: 3px 10px;
+  background: rgba(233, 69, 96, 0.25);
+  color: #e94560;
+  border: 1px solid #e94560;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  animation: adminPulse 2s ease-in-out infinite;
+}
+
+@keyframes adminPulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(233, 69, 96, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(233, 69, 96, 0.6); }
 }
 
 .logoutBtn {

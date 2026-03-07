@@ -10,6 +10,7 @@ async function initDb() {
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       name TEXT UNIQUE NOT NULL,
+      avatar TEXT NOT NULL DEFAULT '',
       is_admin BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -50,7 +51,24 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_reservations_dates ON reservations(start_date, end_date);
     CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
     CREATE INDEX IF NOT EXISTS idx_audit_log_reservation_id ON audit_log(reservation_id);
+    CREATE TABLE IF NOT EXISTS messages (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      parent_id INTEGER REFERENCES messages(id),
+      content TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_messages_parent_id ON messages(parent_id);
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+  `);
+
+  // Migration: add avatar column if missing (for existing databases)
+  await pool.query(`
+    DO $$ BEGIN
+      ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT '';
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
   `);
 }
 
