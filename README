@@ -1,0 +1,26 @@
+ProspectiveStay - Reservation system for PPW
+
+PREREQUISITES
+  Node.js 18+ (recommend v20)
+
+SETUP
+  cd server && npm install && npm run seed
+  cd client && npm install
+
+RUN (two terminals)
+  Terminal 1:  cd server && npm run dev       (API on port 3001)
+  Terminal 2:  cd client && npm run dev       (UI on port 5173)
+
+  Open http://localhost:5173
+
+LOGIN
+  Enter any email address. The 6-digit verification code is
+  printed to the server console (emails are simulated).
+
+  Admin account: admin@ppw.com
+
+TESTS
+  bash tests/run_tests.sh
+
+BUILD FOR PRODUCTION
+  cd client && npm run build

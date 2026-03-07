@@ -1,0 +1,96 @@
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.container h2 {
+  margin: 0 0 16px;
+}
+
+.empty {
+  color: #6b7280;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.cardHeader h3 {
+  margin: 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cardBody p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+.auditBtn {
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.auditBtn:hover {
+  background: #e5e7eb;
+}
+
+.auditSection {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  overflow-x: auto;
+}
+
+.auditTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.auditTable th,
+.auditTable td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.auditTable th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+.changesCell {
+  max-width: 300px;
+  word-break: break-word;
+}

@@ -1,0 +1,119 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.header h2 {
+  margin: 0;
+  min-width: 200px;
+  text-align: center;
+}
+
+.navBtn {
+  padding: 8px 14px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.navBtn:hover {
+  background: #e5e7eb;
+}
+
+.calendar {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.calendar th {
+  padding: 10px;
+  background: #f9fafb;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.calendar td {
+  height: 70px;
+  vertical-align: top;
+  padding: 6px;
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.emptyCell {
+  background: #f9fafb;
+}
+
+.dayCell {
+  cursor: default;
+}
+
+.dayCell.accepted {
+  background: #dcfce7;
+  cursor: pointer;
+}
+
+.dayCell.pending {
+  background: #fef9c3;
+  cursor: pointer;
+}
+
+.dayNumber {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.countBadge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 11px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.popover {
+  margin-top: 20px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.popover h3 {
+  margin: 0 0 12px;
+}
+
+.popoverItem {
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.popoverItem:last-child {
+  border-bottom: none;
+}
