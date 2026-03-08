@@ -16,7 +16,6 @@ export default function CalendarViewTab() {
   const [currentMonth, setCurrentMonth] = useState(now.getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
   const [reservations, setReservations] = useState([]);
-  const [selectedDay, setSelectedDay] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,7 +33,6 @@ export default function CalendarViewTab() {
     } else {
       setCurrentMonth(currentMonth - 1);
     }
-    setSelectedDay(null);
   };
 
   const goForward = () => {
@@ -44,7 +42,6 @@ export default function CalendarViewTab() {
     } else {
       setCurrentMonth(currentMonth + 1);
     }
-    setSelectedDay(null);
   };
 
   const firstDayOfWeek = new Date(currentYear, currentMonth - 1, 1).getDay();
@@ -74,8 +71,6 @@ export default function CalendarViewTab() {
     rows.push(cells.slice(i, i + 7));
   }
 
-  const selectedReservations = selectedDay ? getReservationsForDay(selectedDay) : [];
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -101,21 +96,24 @@ export default function CalendarViewTab() {
                     return <td key={cell.key} className={styles.emptyCell}></td>;
                   }
                   const dayRes = getReservationsForDay(cell.day);
-                  const hasAccepted = dayRes.some((r) => r.status === 'Accepted');
-                  const hasPending = dayRes.some((r) => r.status === 'Pending');
-                  let cellClass = styles.dayCell;
-                  if (hasAccepted) cellClass += ' ' + styles.accepted;
-                  else if (hasPending) cellClass += ' ' + styles.pending;
+                  const hasConflict = dayRes.length > 1;
 
                   return (
-                    <td
-                      key={cell.key}
-                      className={cellClass}
-                      onClick={() => dayRes.length > 0 && setSelectedDay(cell.day === selectedDay ? null : cell.day)}
-                    >
+                    <td key={cell.key} className={`${styles.dayCell} ${dayRes.length > 0 ? styles.hasReservation : ''}`}>
                       <span className={styles.dayNumber}>{cell.day}</span>
                       {dayRes.length > 0 && (
-                        <span className={styles.countBadge}>{dayRes.length}</span>
+                        <div className={styles.resList}>
+                          {dayRes.map((r) => (
+                            <span key={r.id} className={styles.resName}>
+                              {r.name}{r.size_of_party > 1 ? ` (+${r.size_of_party - 1})` : ''}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {hasConflict && (
+                        <span className={styles.conflictIcon} title="Conflicting Reservations">
+                          !
+                        </span>
                       )}
                     </td>
                   );
@@ -124,19 +122,6 @@ export default function CalendarViewTab() {
             ))}
           </tbody>
         </table>
-      )}
-
-      {selectedDay && selectedReservations.length > 0 && (
-        <div className={styles.popover}>
-          <h3>Reservations on {MONTH_NAMES[currentMonth - 1]} {selectedDay}, {currentYear}</h3>
-          {selectedReservations.map((r) => (
-            <div key={r.id} className={styles.popoverItem}>
-              <strong>{r.name}</strong> - Party of {r.size_of_party} ({r.status})
-              <br />
-              <small>{r.start_date} to {r.end_date}</small>
-            </div>
-          ))}
-        </div>
       )}
     </div>
   );

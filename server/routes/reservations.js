@@ -17,11 +17,8 @@ function formatReservation(r) {
 
 function validateReservationFields(body, isNew = true) {
   const errors = [];
-  const { name, size_of_party, start_date, end_date, notes } = body;
+  const { size_of_party, start_date, end_date, notes } = body;
 
-  if (!name || typeof name !== 'string' || name.trim().length === 0) {
-    errors.push('Name is required');
-  }
   if (size_of_party === undefined || !Number.isInteger(size_of_party) || size_of_party < 1) {
     errors.push('Size of party must be an integer >= 1');
   }
@@ -97,7 +94,10 @@ router.get('/calendar', requireAuth, async (req, res) => {
 // GET /api/reservations/:id/audit
 router.get('/:id/audit', requireAuth, async (req, res) => {
   try {
-    const { rows: reservations } = await pool.query('SELECT * FROM reservations WHERE id = $1', [req.params.id]);
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'Invalid reservation ID' });
+
+    const { rows: reservations } = await pool.query('SELECT * FROM reservations WHERE id = $1', [id]);
     if (reservations.length === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
@@ -107,7 +107,7 @@ router.get('/:id/audit', requireAuth, async (req, res) => {
 
     const { rows: audit } = await pool.query(
       'SELECT id, action, changes_json, user_name, created_at FROM audit_log WHERE reservation_id = $1 ORDER BY created_at ASC',
-      [req.params.id]
+      [id]
     );
 
     res.json({ audit });
@@ -120,7 +120,7 @@ router.get('/:id/audit', requireAuth, async (req, res) => {
 // POST /api/reservations
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { name, size_of_party, start_date, end_date, notes } = req.body;
+    const { size_of_party, start_date, end_date, notes } = req.body;
     const errors = validateReservationFields(req.body, true);
 
     if (errors.length > 0) {
@@ -130,13 +130,13 @@ router.post('/', requireAuth, async (req, res) => {
     const { rows } = await pool.query(
       `INSERT INTO reservations (user_id, name, size_of_party, start_date, end_date, notes)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [req.user.id, name.trim(), size_of_party, start_date, end_date, (notes || '').trim()]
+      [req.user.id, req.user.name, size_of_party, start_date, end_date, (notes || '').trim()]
     );
 
     const reservation = rows[0];
 
     await logAudit(reservation.id, req.user.id, req.user.name, 'created', {
-      name: name.trim(),
+      name: req.user.name,
       size_of_party,
       start_date,
       end_date,
@@ -154,7 +154,10 @@ router.post('/', requireAuth, async (req, res) => {
 // PUT /api/reservations/:id
 router.put('/:id', requireAuth, async (req, res) => {
   try {
-    const { rows: reservations } = await pool.query('SELECT * FROM reservations WHERE id = $1', [req.params.id]);
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'Invalid reservation ID' });
+
+    const { rows: reservations } = await pool.query('SELECT * FROM reservations WHERE id = $1', [id]);
     if (reservations.length === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
@@ -166,7 +169,7 @@ router.put('/:id', requireAuth, async (req, res) => {
       return res.status(400).json({ error: `Cannot edit a ${reservation.status.toLowerCase()} reservation` });
     }
 
-    const { name, size_of_party, start_date, end_date, notes } = req.body;
+    const { size_of_party, start_date, end_date, notes } = req.body;
     const errors = validateReservationFields(req.body, false);
     if (errors.length > 0) {
       return res.status(400).json({ error: errors.join('. ') });
@@ -174,7 +177,6 @@ router.put('/:id', requireAuth, async (req, res) => {
 
     // Build changes
     const changes = {};
-    if (name.trim() !== reservation.name) changes.name = { old: reservation.name, new: name.trim() };
     if (size_of_party !== reservation.size_of_party) changes.size_of_party = { old: reservation.size_of_party, new: size_of_party };
     const oldStartDate = reservation.start_date instanceof Date ? reservation.start_date.toISOString().slice(0, 10) : reservation.start_date;
     const oldEndDate = reservation.end_date instanceof Date ? reservation.end_date.toISOString().slice(0, 10) : reservation.end_date;
@@ -191,9 +193,9 @@ router.put('/:id', requireAuth, async (req, res) => {
     }
 
     const { rows: updated } = await pool.query(
-      `UPDATE reservations SET name = $1, size_of_party = $2, start_date = $3, end_date = $4, notes = $5, status = $6, updated_at = NOW()
-       WHERE id = $7 RETURNING *`,
-      [name.trim(), size_of_party, start_date, end_date, newNotes, newStatus, req.params.id]
+      `UPDATE reservations SET size_of_party = $1, start_date = $2, end_date = $3, notes = $4, status = $5, updated_at = NOW()
+       WHERE id = $6 RETURNING *`,
+      [size_of_party, start_date, end_date, newNotes, newStatus, id]
     );
 
     if (Object.keys(changes).length > 0) {
@@ -210,7 +212,10 @@ router.put('/:id', requireAuth, async (req, res) => {
 // DELETE /api/reservations/:id
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    const { rows: reservations } = await pool.query('SELECT * FROM reservations WHERE id = $1', [req.params.id]);
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'Invalid reservation ID' });
+
+    const { rows: reservations } = await pool.query('SELECT * FROM reservations WHERE id = $1', [id]);
     if (reservations.length === 0) {
       return res.status(404).json({ error: 'Reservation not found' });
     }
@@ -218,17 +223,17 @@ router.delete('/:id', requireAuth, async (req, res) => {
     if (reservation.user_id !== req.user.id) {
       return res.status(403).json({ error: 'You can only cancel your own reservations' });
     }
-    if (['Cancelled', 'Rejected', 'Completed'].includes(reservation.status)) {
-      return res.status(400).json({ error: `Cannot cancel a ${reservation.status.toLowerCase()} reservation` });
+    if (['Cancelled', 'Rejected', 'Completed', 'PendingCancel'].includes(reservation.status)) {
+      return res.status(400).json({ error: `Cannot cancel a ${reservation.status} reservation` });
     }
 
     const { rows: updated } = await pool.query(
-      "UPDATE reservations SET status = 'Cancelled', updated_at = NOW() WHERE id = $1 RETURNING *",
-      [req.params.id]
+      "UPDATE reservations SET status = 'PendingCancel', updated_at = NOW() WHERE id = $1 RETURNING *",
+      [id]
     );
 
-    await logAudit(reservation.id, req.user.id, req.user.name, 'cancelled', {
-      status: { old: reservation.status, new: 'Cancelled' }
+    await logAudit(reservation.id, req.user.id, req.user.name, 'requested_cancel', {
+      status: { old: reservation.status, new: 'PendingCancel' }
     });
 
     res.json({ reservation: formatReservation(updated[0]) });

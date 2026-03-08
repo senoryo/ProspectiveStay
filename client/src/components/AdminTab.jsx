@@ -9,9 +9,10 @@ const STATUS_COLORS = {
   Cancelled: '#9ca3af',
   Rejected: '#ef4444',
   Completed: '#3b82f6',
+  PendingCancel: '#f97316',
 };
 
-const VALID_STATUSES = ['Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed'];
+const VALID_STATUSES = ['Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed', 'PendingCancel'];
 
 export default function AdminTab() {
   const { logout } = useAuth();
@@ -189,7 +190,7 @@ export default function AdminTab() {
                     <td data-label="End">{r.end_date}</td>
                     <td data-label="Status">
                       <span className={styles.badge} style={{ background: STATUS_COLORS[r.status] || '#9ca3af' }}>
-                        {r.status}
+                        {r.status === 'PendingCancel' ? 'Pending Cancel' : r.status}
                       </span>
                     </td>
                     <td data-label="Notes" className={styles.notesCell}>{r.notes}</td>
@@ -198,6 +199,12 @@ export default function AdminTab() {
                         <>
                           <button onClick={() => handleAction(r.id, 'Accepted')} className={styles.acceptBtn}>Accept</button>
                           <button onClick={() => handleAction(r.id, 'Rejected')} className={styles.rejectBtn}>Reject</button>
+                        </>
+                      )}
+                      {r.status === 'PendingCancel' && (
+                        <>
+                          <button onClick={() => handleAction(r.id, 'Cancelled')} className={styles.acceptBtn}>Approve Cancel</button>
+                          <button onClick={() => handleAction(r.id, 'Accepted')} className={styles.rejectBtn}>Deny Cancel</button>
                         </>
                       )}
                       <button onClick={() => startEdit(r)} className={styles.editBtn}>Edit</button>

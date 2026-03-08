@@ -6,7 +6,7 @@ const { logError } = require('../logger');
 const router = express.Router();
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-const VALID_STATUSES = ['Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed'];
+const VALID_STATUSES = ['Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed', 'PendingCancel'];
 
 function formatReservation(r) {
   return {
@@ -55,11 +55,14 @@ router.get('/reservations', requireAdmin, async (req, res) => {
 // PUT /api/admin/reservations/:id
 router.put('/reservations/:id', requireAdmin, async (req, res) => {
   try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'Invalid reservation ID' });
+
     const { rows: reservations } = await pool.query(
       `SELECT r.*, u.name as user_name
        FROM reservations r JOIN users u ON r.user_id = u.id
        WHERE r.id = $1`,
-      [req.params.id]
+      [id]
     );
 
     if (reservations.length === 0) {
@@ -115,7 +118,7 @@ router.put('/reservations/:id', requireAdmin, async (req, res) => {
     const { rows: updated } = await pool.query(
       `UPDATE reservations SET name = $1, size_of_party = $2, start_date = $3, end_date = $4, notes = $5, status = $6, updated_at = NOW()
        WHERE id = $7 RETURNING *`,
-      [finalName, finalSizeOfParty, finalStartDate, finalEndDate, finalNotes, finalStatus, req.params.id]
+      [finalName, finalSizeOfParty, finalStartDate, finalEndDate, finalNotes, finalStatus, id]
     );
 
     if (Object.keys(changes).length > 0) {
@@ -132,7 +135,7 @@ router.put('/reservations/:id', requireAdmin, async (req, res) => {
       `SELECT r.*, u.name as user_name
        FROM reservations r JOIN users u ON r.user_id = u.id
        WHERE r.id = $1`,
-      [req.params.id]
+      [id]
     );
 
     // Overlap warning when accepting
@@ -142,7 +145,7 @@ router.put('/reservations/:id', requireAdmin, async (req, res) => {
         `SELECT COUNT(*) as count FROM reservations
          WHERE id != $1 AND status = 'Accepted'
          AND start_date <= $2 AND end_date >= $3`,
-        [req.params.id, result[0].end_date, result[0].start_date]
+        [id, result[0].end_date, result[0].start_date]
       );
 
       if (parseInt(overlapping[0].count) > 0) {

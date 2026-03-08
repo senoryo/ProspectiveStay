@@ -31,7 +31,7 @@ async function initDb() {
       size_of_party INTEGER NOT NULL DEFAULT 1 CHECK (size_of_party >= 1),
       start_date DATE NOT NULL,
       end_date DATE NOT NULL CHECK (end_date >= start_date),
-      status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed')),
+      status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed', 'PendingCancel')),
       notes TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -56,9 +56,27 @@ async function initDb() {
       user_id INTEGER NOT NULL REFERENCES users(id),
       parent_id INTEGER REFERENCES messages(id),
       content TEXT NOT NULL,
+      gif_url TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS message_reactions (
+      id SERIAL PRIMARY KEY,
+      message_id INTEGER NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      emoji TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE(message_id, user_id, emoji)
+    );
+
+    CREATE TABLE IF NOT EXISTS custom_avatars (
+      id SERIAL PRIMARY KEY,
+      name TEXT UNIQUE NOT NULL,
+      photo_url TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_message_reactions_message_id ON message_reactions(message_id);
     CREATE INDEX IF NOT EXISTS idx_messages_parent_id ON messages(parent_id);
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
   `);
@@ -68,6 +86,23 @@ async function initDb() {
     DO $$ BEGIN
       ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT '';
     EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `);
+
+  // Migration: add gif_url column to messages if missing
+  await pool.query(`
+    DO $$ BEGIN
+      ALTER TABLE messages ADD COLUMN gif_url TEXT NOT NULL DEFAULT '';
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `);
+
+  // Migration: add PendingCancel to status CHECK constraint
+  await pool.query(`
+    DO $$ BEGIN
+      ALTER TABLE reservations DROP CONSTRAINT IF EXISTS reservations_status_check;
+      ALTER TABLE reservations ADD CONSTRAINT reservations_status_check
+        CHECK (status IN ('Pending', 'Accepted', 'Cancelled', 'Rejected', 'Completed', 'PendingCancel'));
     END $$;
   `);
 }

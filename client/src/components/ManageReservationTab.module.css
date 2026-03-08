@@ -117,6 +117,12 @@
   margin: 8px 0;
 }
 
+.success {
+  color: #22c55e;
+  font-size: 14px;
+  margin: 8px 0;
+}
+
 .listSection {
   background: #16213e;
   border-radius: 12px;
