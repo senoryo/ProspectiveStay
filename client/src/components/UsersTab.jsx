@@ -19,7 +19,7 @@ function formatDate(dateStr) {
 }
 
 export default function UsersTab() {
-  const { logout } = useAuth();
+  const { user: currentUser, logout } = useAuth();
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
 
@@ -53,6 +53,22 @@ export default function UsersTab() {
               <div className={styles.stat}>
                 {u.reservation_count} reservation{u.reservation_count !== 1 ? 's' : ''}
               </div>
+              {currentUser.is_admin && (
+                <button
+                  className={styles.removeBtn}
+                  onClick={async () => {
+                    if (!window.confirm(`Remove ${u.name}? This will delete all their data.`)) return;
+                    try {
+                      await api.delete(`/api/auth/users/${u.id}`);
+                      setUsers((prev) => prev.filter((x) => x.id !== u.id));
+                    } catch (err) {
+                      setError(err.message);
+                    }
+                  }}
+                >
+                  Remove
+                </button>
+              )}
             </div>
           </div>
         ))}

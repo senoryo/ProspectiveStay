@@ -103,6 +103,44 @@ router.get('/users', requireAuth, async (req, res) => {
   }
 });
 
+router.delete('/users/:id', requireAuth, async (req, res) => {
+  try {
+    if (!req.user.is_admin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'Invalid user ID' });
+
+    const { rows } = await pool.query('SELECT id, is_admin FROM users WHERE id = $1', [id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    if (rows[0].is_admin) return res.status(400).json({ error: 'Cannot remove admin users' });
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM message_reactions WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM message_reactions WHERE message_id IN (SELECT id FROM messages WHERE user_id = $1)', [id]);
+      await client.query('DELETE FROM messages WHERE parent_id IN (SELECT id FROM messages WHERE user_id = $1)', [id]);
+      await client.query('DELETE FROM messages WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM audit_log WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM reservations WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM sessions WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM users WHERE id = $1', [id]);
+      await client.query('COMMIT');
+    } catch (txErr) {
+      await client.query('ROLLBACK');
+      throw txErr;
+    } finally {
+      client.release();
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    logError('delete-user', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.get('/avatars', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT name, photo_url FROM custom_avatars ORDER BY name ASC');
