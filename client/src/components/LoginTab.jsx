@@ -4,35 +4,70 @@ import { useAuth } from '../context/AuthContext';
 import styles from './LoginTab.module.css';
 
 const AVATARS = [
+  // American actors
   'Arnold Schwarzenegger', 'Brad Pitt', 'Bruce Willis', 'Cate Blanchett',
-  'Charlie Chaplin', 'Chris Pratt', 'Clint Eastwood', 'Danny DeVito',
-  'Denzel Washington', 'Dwayne Johnson', 'Eddie Murphy', 'Emma Stone',
-  'Harrison Ford', 'Jack Nicholson', 'Jackie Chan', 'Jeff Goldblum',
-  'Jim Carrey', 'Johnny Depp', 'Keanu Reeves', 'Leonardo DiCaprio',
-  'Margot Robbie', 'Meryl Streep', 'Morgan Freeman', 'Nicolas Cage',
-  'Oprah Winfrey', 'Robert De Niro', 'Robert Downey Jr.', 'Robin Williams',
-  'Ryan Reynolds', 'Samuel L. Jackson', 'Sandra Bullock', 'Scarlett Johansson',
-  'Sean Connery', 'Sigourney Weaver', 'Sylvester Stallone', 'Tom Cruise',
-  'Tom Hanks', 'Uma Thurman', 'Vin Diesel', 'Will Smith',
-  'Angelina Jolie', 'Ben Stiller', 'Bill Murray', 'Christopher Walken',
-  'Drew Barrymore', 'George Clooney', 'Jennifer Lawrence', 'Julia Roberts',
-  'Mark Wahlberg', 'Whoopi Goldberg',
+  'Chris Pratt', 'Clint Eastwood', 'Danny DeVito', 'Denzel Washington',
+  'Dwayne Johnson', 'Eddie Murphy', 'Emma Stone', 'Harrison Ford',
+  'Jack Nicholson', 'Jackie Chan', 'Jeff Goldblum', 'Jim Carrey',
+  'Johnny Depp', 'Keanu Reeves', 'Leonardo DiCaprio', 'Margot Robbie',
+  'Meryl Streep', 'Morgan Freeman', 'Nicolas Cage', 'Oprah Winfrey',
+  'Robert De Niro', 'Robert Downey Jr.', 'Robin Williams', 'Ryan Reynolds',
+  'Samuel L. Jackson', 'Sandra Bullock', 'Scarlett Johansson',
+  'Sylvester Stallone', 'Tom Cruise', 'Tom Hanks', 'Will Smith',
+  'Angelina Jolie', 'Bill Murray', 'George Clooney', 'Jennifer Lawrence',
+  'Julia Roberts',
+  // British actors
+  'Daniel Craig', 'Emma Watson', 'Helen Mirren', 'Hugh Grant',
+  'Idris Elba', 'Judi Dench', 'Kate Winslet', 'Benedict Cumberbatch',
+  'Patrick Stewart', 'Rowan Atkinson', 'Sean Connery', 'Tom Hardy',
+  // Canadian actors
+  'Ryan Gosling', 'Seth Rogen', 'Mike Myers', 'Keanu Reeves',
+  'Rachel McAdams', 'Sandra Oh',
+  // Singers
+  'Beyoncé', 'Taylor Swift', 'Elvis Presley', 'Freddie Mercury',
+  'Adele', 'Drake (musician)', 'Ed Sheeran', 'Elton John',
+  'Rihanna', 'Lady Gaga', 'Michael Jackson', 'Madonna',
+  'Bruno Mars', 'Celine Dion', 'Justin Bieber', 'The Weeknd',
+  'David Bowie', 'Whitney Houston', 'Dolly Parton', 'Shania Twain',
+  // Athletes
+  'Michael Jordan', 'Serena Williams', 'LeBron James', 'Tom Brady',
+  'Wayne Gretzky', 'David Beckham', 'Usain Bolt', 'Muhammad Ali',
+  'Tiger Woods', 'Lionel Messi', 'Cristiano Ronaldo', 'Connor McDavid',
+  'Sidney Crosby', 'Lewis Hamilton', 'Roger Federer',
 ];
+
+// Deduplicate (Keanu Reeves appears in both American and Canadian)
+const UNIQUE_AVATARS = [...new Set(AVATARS)];
+
+// Display name (strip Wikipedia disambiguation)
+function displayName(name) {
+  return name.replace(/ \(.*\)$/, '');
+}
 
 function useAvatarPhotos() {
   const [photos, setPhotos] = useState({});
 
   useEffect(() => {
-    const titles = AVATARS.map((n) => n.replace(/ /g, '_')).join('|');
-    const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles)}&prop=pageimages&pithumbsize=150&format=json&origin=*`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((data) => {
+    // Wikipedia API supports max 50 titles per request
+    const batches = [];
+    for (let i = 0; i < UNIQUE_AVATARS.length; i += 50) {
+      batches.push(UNIQUE_AVATARS.slice(i, i + 50));
+    }
+
+    Promise.all(
+      batches.map((batch) => {
+        const titles = batch.map((n) => n.replace(/ /g, '_')).join('|');
+        const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles)}&prop=pageimages&pithumbsize=150&format=json&origin=*`;
+        return fetch(url).then((r) => r.json());
+      })
+    )
+      .then((results) => {
         const map = {};
-        for (const page of Object.values(data.query.pages)) {
-          if (page.thumbnail) {
-            const name = page.title;
-            map[name] = page.thumbnail.source;
+        for (const data of results) {
+          for (const page of Object.values(data.query.pages)) {
+            if (page.thumbnail) {
+              map[page.title] = page.thumbnail.source;
+            }
           }
         }
         setPhotos(map);
@@ -87,24 +122,25 @@ export default function LoginTab() {
         <div className={styles.avatarSection}>
           <p className={styles.avatarLabel}>Choose your avatar:</p>
           <div className={styles.avatarGrid}>
-            {AVATARS.map((celeb) => {
+            {UNIQUE_AVATARS.map((celeb) => {
               const photoUrl = photos[celeb];
+              const display = displayName(celeb);
               return (
                 <button
                   type="button"
                   key={celeb}
                   className={`${styles.avatarItem} ${selectedAvatar === celeb ? styles.avatarSelected : ''}`}
                   onClick={() => setSelectedAvatar(celeb)}
-                  title={celeb}
+                  title={display}
                 >
                   {photoUrl ? (
-                    <img src={photoUrl} alt={celeb} className={styles.avatarImg} />
+                    <img src={photoUrl} alt={display} className={styles.avatarImg} />
                   ) : (
                     <div className={`${styles.avatarImg} ${styles.avatarPlaceholder}`}>
-                      {celeb[0]}
+                      {display[0]}
                     </div>
                   )}
-                  <span className={styles.avatarName}>{celeb.split(' ')[0]}</span>
+                  <span className={styles.avatarName}>{display.split(' ')[0]}</span>
                 </button>
               );
             })}
