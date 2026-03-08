@@ -492,4 +492,15 @@
     width: calc(100vw - 16px) !important;
     left: 8px !important;
   }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .avatarPlaceholder {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
 }

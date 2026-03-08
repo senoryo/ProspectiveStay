@@ -42,7 +42,14 @@ export default function ViewReservationsTab() {
           {reservations.map((r) => (
             <div key={r.id} className={styles.card}>
               <div className={styles.cardHeader}>
-                <h3>{r.name}</h3>
+                <div className={styles.cardTitle}>
+                  {r.user_avatar ? (
+                    <img src={r.user_avatar} alt="" className={styles.avatar} />
+                  ) : (
+                    <div className={styles.avatarPlaceholder}>{r.user_name?.[0] || r.name[0]}</div>
+                  )}
+                  <h3>{r.name}</h3>
+                </div>
                 <span
                   className={styles.badge}
                   style={{ background: STATUS_COLORS[r.status] || '#9ca3af' }}

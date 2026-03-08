@@ -52,7 +52,7 @@ async function logAudit(reservationId, userId, userName, action, changesJson) {
 router.get('/', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT r.*, u.name as user_name FROM reservations r JOIN users u ON r.user_id = u.id ORDER BY r.start_date DESC'
+      'SELECT r.*, u.name as user_name, u.avatar as user_avatar FROM reservations r JOIN users u ON r.user_id = u.id ORDER BY r.start_date DESC'
     );
     res.json({ reservations: rows.map(formatReservation) });
   } catch (err) {

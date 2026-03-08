@@ -228,6 +228,11 @@
     display: none;
   }
 
+  .userAvatar {
+    width: 44px;
+    height: 44px;
+  }
+
   .tab {
     padding: 12px 14px;
     font-size: 13px;
