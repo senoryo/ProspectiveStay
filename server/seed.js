@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { pool, initDb } = require('./db');
+const { pool } = require('./db');
 
 async function seed() {
   const adminUser = process.env.ADMIN_USER;
@@ -7,7 +7,6 @@ async function seed() {
     console.error('ADMIN_USER environment variable is required');
     process.exit(1);
   }
-  await initDb();
 
   await pool.query(`
     INSERT INTO users (name, is_admin)

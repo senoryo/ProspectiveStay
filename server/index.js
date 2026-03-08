@@ -4,7 +4,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-const { initDb, cleanupExpiredSessions } = require('./db');
+const { cleanupExpiredSessions } = require('./db');
 
 const app = express();
 
@@ -49,7 +49,6 @@ app.get('*', (req, res) => {
 });
 
 async function start() {
-  await initDb();
   await cleanupExpiredSessions();
   setInterval(cleanupExpiredSessions, 60 * 60 * 1000);
 
