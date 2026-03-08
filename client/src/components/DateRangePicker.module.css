@@ -144,3 +144,19 @@
   color: #5a6a8a;
   font-size: 13px;
 }
+
+@media (max-width: 600px) {
+  .container {
+    max-width: 100%;
+  }
+
+  .navBtn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .day {
+    font-size: 13px;
+    min-height: 38px;
+  }
+}

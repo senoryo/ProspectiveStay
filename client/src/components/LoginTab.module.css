@@ -74,4 +74,15 @@
     margin: 20px 16px;
     padding: 24px 20px;
   }
+
+  .input {
+    font-size: 16px;
+    padding: 14px;
+  }
+
+  .button {
+    padding: 16px;
+    font-size: 17px;
+    min-height: 48px;
+  }
 }

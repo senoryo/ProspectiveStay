@@ -165,8 +165,13 @@
     font-size: 11px;
   }
 
+  .auditTable th,
+  .auditTable td {
+    padding: 6px 6px;
+  }
+
   .changesCell {
-    max-width: 200px;
+    max-width: 150px;
   }
 
   .avatar {
@@ -178,5 +183,19 @@
     width: 48px;
     height: 48px;
     font-size: 20px;
+  }
+
+  .auditBtn {
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .cardHeader h3 {
+    font-size: 16px;
+  }
+
+  .cardBody p {
+    font-size: 13px;
   }
 }

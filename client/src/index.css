@@ -28,3 +28,9 @@ input, button, select, textarea {
   background: #4a5568;
   border-radius: 4px;
 }
+
+@media (max-width: 600px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+}

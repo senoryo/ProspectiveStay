@@ -136,8 +136,8 @@ export default function AdminTab() {
               {reservations.map((r) => (
                 editingId === r.id ? (
                   <tr key={r.id} className={styles.editRow}>
-                    <td>{r.user_name}</td>
-                    <td>
+                    <td data-label="User">{r.user_name}</td>
+                    <td data-label="Name">
                       <input
                         type="text"
                         value={editForm.name}
@@ -145,7 +145,7 @@ export default function AdminTab() {
                         className={styles.editInput}
                       />
                     </td>
-                    <td>
+                    <td data-label="Party">
                       <input
                         type="number"
                         min="1"
@@ -155,7 +155,7 @@ export default function AdminTab() {
                         style={{ width: 60 }}
                       />
                     </td>
-                    <td>
+                    <td data-label="Start">
                       <input
                         type="date"
                         value={editForm.start_date}
@@ -163,7 +163,7 @@ export default function AdminTab() {
                         className={styles.editInput}
                       />
                     </td>
-                    <td>
+                    <td data-label="End">
                       <input
                         type="date"
                         value={editForm.end_date}
@@ -171,7 +171,7 @@ export default function AdminTab() {
                         className={styles.editInput}
                       />
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <select
                         value={editForm.status}
                         onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
@@ -180,7 +180,7 @@ export default function AdminTab() {
                         {VALID_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </td>
-                    <td>
+                    <td data-label="Notes">
                       <input
                         type="text"
                         value={editForm.notes}

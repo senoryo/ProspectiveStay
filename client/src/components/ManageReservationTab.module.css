@@ -230,9 +230,34 @@
     padding: 16px;
   }
 
+  .formSection {
+    padding: 16px;
+  }
+
   .dateRow {
     flex-direction: column;
     gap: 0;
+  }
+
+  .button {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 16px;
+  }
+
+  .cancelButton {
+    width: 100%;
+    padding: 14px 24px;
+  }
+
+  .formButtons {
+    flex-direction: column;
+  }
+
+  .actionBtn,
+  .actionBtnDanger {
+    padding: 12px 16px;
+    font-size: 14px;
   }
 
   .table thead { display: none; }

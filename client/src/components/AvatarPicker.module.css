@@ -221,4 +221,8 @@
   .lameBtn {
     align-self: flex-start;
   }
+
+  .customInput {
+    padding: 12px 14px;
+  }
 }

@@ -128,6 +128,18 @@
   gap: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+.nav::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  background: linear-gradient(to right, transparent, #0a1128);
+  pointer-events: none;
 }
 
 .tab {
@@ -197,6 +209,10 @@
 }
 
 @media (max-width: 600px) {
+  .heroLogin {
+    background-attachment: scroll;
+  }
+
   .heroOverlay {
     padding: 40px 16px 24px;
   }
@@ -236,5 +252,41 @@
   .tab {
     padding: 12px 14px;
     font-size: 13px;
+  }
+
+  .settingsBtn {
+    padding: 8px 10px;
+  }
+
+  .logoutBtn {
+    padding: 10px 16px;
+    min-height: 44px;
+  }
+
+  .settingsBtn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .nav {
+    position: relative;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 32px;
+    background: linear-gradient(to right, transparent, #16213e);
+    pointer-events: none;
+    z-index: 1;
   }
 }

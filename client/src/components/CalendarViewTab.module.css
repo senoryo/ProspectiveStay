@@ -118,9 +118,15 @@
   line-height: 1;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .container {
-    padding: 16px;
+    padding: 16px 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .header {
+    gap: 12px;
   }
 
   .header h2 {
@@ -130,12 +136,12 @@
 
   .calendar td {
     height: 70px;
-    padding: 3px;
+    padding: 2px;
   }
 
   .calendar th {
-    padding: 8px 4px;
-    font-size: 11px;
+    padding: 8px 2px;
+    font-size: 10px;
   }
 
   .dayNumber {
@@ -146,9 +152,39 @@
     font-size: 9px;
   }
 
+  .navBtn {
+    padding: 12px 18px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .conflictIcon {
     width: 14px;
     height: 14px;
     font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar td {
+    height: 60px;
+  }
+
+  .calendar th {
+    font-size: 9px;
+    padding: 6px 1px;
+  }
+
+  .resName {
+    font-size: 8px;
+  }
+
+  .header h2 {
+    min-width: auto;
+    font-size: 16px;
+  }
+
+  .header {
+    gap: 8px;
   }
 }
