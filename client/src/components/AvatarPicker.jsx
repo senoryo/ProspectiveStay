@@ -93,7 +93,7 @@ export default function AvatarPicker({ onDone }) {
   const [selected, setSelected] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [customName, setCustomName] = useState('fill in your own celebrity');
+  const [customName, setCustomName] = useState('Celebrity Full Name');
   const [customCelebs, setCustomCelebs] = useState([]);
   const [customLoading, setCustomLoading] = useState(false);
   const [scrollTo, setScrollTo] = useState(null);
@@ -114,7 +114,7 @@ export default function AvatarPicker({ onDone }) {
   const handleCustom = async () => {
     const raw = customName.trim();
     const name = raw.replace(/\b\w/g, (c) => c.toUpperCase());
-    if (!name || name === 'Fill In Your Own Celebrity') {
+    if (!name || name === 'Celebrity Full Name') {
       setError('Enter a celebrity name first');
       return;
     }
@@ -136,7 +136,7 @@ export default function AvatarPicker({ onDone }) {
       setCustomCelebs((prev) => [...prev, name]);
       setSelected(name);
       setScrollTo(name);
-      setCustomName('fill in your own celebrity');
+      setCustomName('Celebrity Full Name');
     } catch {
       setError('Failed to fetch photo from Wikipedia');
     }
@@ -199,25 +199,6 @@ export default function AvatarPicker({ onDone }) {
           );
         })}
       </div>
-      <div className={styles.customRow}>
-        <button
-          type="button"
-          className={styles.lameBtn}
-          onClick={handleCustom}
-          disabled={customLoading}
-        >
-          {customLoading ? 'Looking up...' : 'These are lame'}
-        </button>
-        <input
-          className={styles.customInput}
-          value={customName}
-          onChange={(e) => setCustomName(e.target.value)}
-          onFocus={() => { if (customName === 'fill in your own celebrity') setCustomName(''); }}
-          onBlur={() => { if (!customName.trim()) setCustomName('fill in your own celebrity'); }}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleCustom(); }}
-        />
-      </div>
-      {error && <p className={styles.error}>{error}</p>}
       <button
         onClick={handleSave}
         disabled={saving || !selected}
@@ -225,6 +206,26 @@ export default function AvatarPicker({ onDone }) {
       >
         {saving ? 'Saving...' : 'Save Avatar'}
       </button>
+      <div className={styles.customLabel}>Think these Avatars are all lame, you can search for a new one:</div>
+      <div className={styles.customRow}>
+        <input
+          className={styles.customInput}
+          value={customName}
+          onChange={(e) => setCustomName(e.target.value)}
+          onFocus={() => { if (customName === 'Celebrity Full Name') setCustomName(''); }}
+          onBlur={() => { if (!customName.trim()) setCustomName('Celebrity Full Name'); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleCustom(); }}
+        />
+        <button
+          type="button"
+          className={styles.lameBtn}
+          onClick={handleCustom}
+          disabled={customLoading}
+        >
+          {customLoading ? 'Looking up...' : 'Search'}
+        </button>
+      </div>
+      {error && <p className={styles.error}>{error}</p>}
       {onDone && user.avatar && (
         <button onClick={onDone} className={styles.cancelBtn}>
           Cancel

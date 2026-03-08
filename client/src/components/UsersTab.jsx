@@ -49,6 +49,7 @@ export default function UsersTab() {
             )}
             <div className={styles.info}>
               <div className={styles.name}>{u.name}</div>
+              <div className={styles.stat}>Member since: {new Date(u.created_at).toLocaleDateString()}</div>
               <div className={styles.stat}>Last login: {formatDate(u.last_login)}</div>
               <div className={styles.stat}>
                 {u.reservation_count} reservation{u.reservation_count !== 1 ? 's' : ''}

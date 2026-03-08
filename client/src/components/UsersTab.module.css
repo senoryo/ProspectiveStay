@@ -117,4 +117,15 @@
   .grid {
     grid-template-columns: 1fr;
   }
+
+  .avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .avatarPlaceholder {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
 }
