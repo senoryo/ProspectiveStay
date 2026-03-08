@@ -81,6 +81,14 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
   `);
 
+  // Migration: drop legacy email column if it exists
+  await pool.query(`
+    DO $$ BEGIN
+      ALTER TABLE users DROP COLUMN email;
+    EXCEPTION WHEN undefined_column THEN NULL;
+    END $$;
+  `);
+
   // Migration: add unique constraint on users.name if missing
   await pool.query(`
     DO $$ BEGIN
