@@ -81,6 +81,14 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
   `);
 
+  // Migration: add user_name column to audit_log if missing
+  await pool.query(`
+    DO $$ BEGIN
+      ALTER TABLE audit_log ADD COLUMN user_name TEXT NOT NULL DEFAULT '';
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `);
+
   // Migration: drop legacy email column if it exists
   await pool.query(`
     DO $$ BEGIN
