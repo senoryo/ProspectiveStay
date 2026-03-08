@@ -23,6 +23,14 @@ exports.up = (pgm) => {
     END $$;
   `);
 
+  // Drop legacy user_email column from audit_log if it exists
+  pgm.sql(`
+    DO $$ BEGIN
+      ALTER TABLE audit_log DROP COLUMN user_email;
+    EXCEPTION WHEN undefined_column THEN NULL;
+    END $$;
+  `);
+
   // Ensure user_name column exists on audit_log
   pgm.sql(`
     DO $$ BEGIN
