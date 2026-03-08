@@ -227,13 +227,22 @@ router.delete('/:id', requireAuth, async (req, res) => {
       return res.status(400).json({ error: `Cannot cancel a ${reservation.status} reservation` });
     }
 
+    // If reservation was created in current session, cancel directly
+    const { rows: sessions } = await pool.query(
+      'SELECT created_at FROM sessions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [req.user.id]
+    );
+    const sessionStart = sessions.length > 0 ? sessions[0].created_at : null;
+    const directCancel = sessionStart && new Date(reservation.created_at) >= new Date(sessionStart);
+
+    const newStatus = directCancel ? 'Cancelled' : 'PendingCancel';
     const { rows: updated } = await pool.query(
-      "UPDATE reservations SET status = 'PendingCancel', updated_at = NOW() WHERE id = $1 RETURNING *",
-      [id]
+      'UPDATE reservations SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [newStatus, id]
     );
 
-    await logAudit(reservation.id, req.user.id, req.user.name, 'requested_cancel', {
-      status: { old: reservation.status, new: 'PendingCancel' }
+    await logAudit(reservation.id, req.user.id, req.user.name, directCancel ? 'cancelled' : 'requested_cancel', {
+      status: { old: reservation.status, new: newStatus }
     });
 
     res.json({ reservation: formatReservation(updated[0]) });

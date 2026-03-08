@@ -81,6 +81,14 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
   `);
 
+  // Migration: add unique constraint on users.name if missing
+  await pool.query(`
+    DO $$ BEGIN
+      ALTER TABLE users ADD CONSTRAINT users_name_key UNIQUE (name);
+    EXCEPTION WHEN duplicate_table THEN NULL;
+    END $$;
+  `);
+
   // Migration: add avatar column if missing (for existing databases)
   await pool.query(`
     DO $$ BEGIN
