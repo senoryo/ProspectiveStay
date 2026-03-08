@@ -86,6 +86,18 @@ export default function AdminTab() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Permanently delete this reservation and all its audit history?')) return;
+    setError('');
+    try {
+      await api.delete(`/api/admin/reservations/${id}`);
+      setReservations((prev) => prev.filter((r) => r.id !== id));
+    } catch (err) {
+      if (err.status === 401) return logout();
+      setError(err.message);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <h2>Admin - All Reservations</h2>
@@ -208,6 +220,7 @@ export default function AdminTab() {
                         </>
                       )}
                       <button onClick={() => startEdit(r)} className={styles.editBtn}>Edit</button>
+                      <button onClick={() => handleDelete(r.id)} className={styles.deleteBtn}>Delete</button>
                     </td>
                   </tr>
                 )

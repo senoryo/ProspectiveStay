@@ -163,4 +163,33 @@ router.put('/reservations/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// DELETE /api/admin/reservations/:id
+router.delete('/reservations/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'Invalid reservation ID' });
+
+    const { rows } = await pool.query('SELECT id FROM reservations WHERE id = $1', [id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Reservation not found' });
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM audit_log WHERE reservation_id = $1', [id]);
+      await client.query('DELETE FROM reservations WHERE id = $1', [id]);
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    logError('admin-delete-reservation', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
